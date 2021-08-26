@@ -1,0 +1,73 @@
+﻿<win10:ModernWindow x:Class="AutoCompletion.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:win10="clr-namespace:WpfControls.Win10Style;assembly=WpfControls"
+        xmlns:local="clr-namespace:AutoCompletion"
+        mc:Ignorable="d"
+        NonActiveWindowTitleBrush="LightGray"
+        WindowStartupLocation="CenterScreen"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        Title="自动补全 - 设置" Height="450" Width="800"
+        Closing="WindowClosing">
+
+    <win10:ModernWindow.TitleTemplate>
+        <DataTemplate>
+            <TextBlock Text="{TemplateBinding Content}"
+                   TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center"
+                   Margin="8 -1 8 0"
+                   FontWeight="Normal" />
+        </DataTemplate>
+    </win10:ModernWindow.TitleTemplate>
+    <win10:ModernWindow.RightWindowCommands>
+        <win10:WindowCommands>
+            <Button x:Name="btnShutdown" Click="ShutdownButtonClick" Content="完全关闭" />
+        </win10:WindowCommands>
+    </win10:ModernWindow.RightWindowCommands>
+    
+    
+    
+    <Grid Margin="0,4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="8"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <win10:AzureDataGrid CanUserAddRows="True" AutoGenerateColumns="False" ItemsSource="{Binding Infos}">
+            <win10:AzureDataGrid.Columns>
+                <DataGridCheckBoxColumn Header="启用" Binding="{Binding Enable}"/>
+                
+                <DataGridTextColumn Header="输入" Binding="{Binding Input}"/>
+                <DataGridTextColumn Header="补全" Binding="{Binding Output}"/>
+
+                <DataGridCheckBoxColumn Header="Shift" Binding="{Binding Shift}"/>
+                <DataGridCheckBoxColumn Header="Alt" Binding="{Binding Alt}"/>
+                <DataGridCheckBoxColumn Header="Ctrl" Binding="{Binding Ctrl}"/>
+            </win10:AzureDataGrid.Columns>
+        </win10:AzureDataGrid>
+
+
+        <Grid Grid.Column="2" VerticalAlignment="Bottom">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="4"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock >开关热键</TextBlock>
+
+            <win10:HotKeyBox Grid.Row="2" HotKey="{Binding SwitchHotKey}"/>
+
+            <win10:FlatButton Grid.Row="4" Click="StartupButtonClick" Content="{Binding StartupButtonContent}"/>
+
+            <win10:FlatButton Grid.Row="6" Click="SaveButtonClick" Content="保存"/>
+        </Grid>
+    </Grid>
+</win10:ModernWindow>

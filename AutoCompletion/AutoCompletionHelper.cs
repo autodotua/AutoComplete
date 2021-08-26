@@ -32,17 +32,25 @@ namespace AutoCompletion
 
         public AutoCompletionHelper()
         {
-            //hook.KeyUp += KeyUp;
-            hook.KeyDown += KeyUp;
+            hook.KeyDown += (s, e) =>
+            {
+                if (DefaultSetting.KeyEvent == 0)
+                {
+                    KeyChanged(e);
+                }
+            };
+            hook.KeyUp += (s, e) =>
+            {
+                if (DefaultSetting.KeyEvent == 1)
+                {
+                    KeyChanged(e);
+                }
+            };
         }
 
         private readonly List<char> inputedChars = new List<char>();
 
-        private void KeyDown(object sender, KeyboardHook.KeyboardHookEventArgs e)
-        {
-        }
-
-        private void KeyUp(object sender, KeyboardHook.KeyboardHookEventArgs e)
+        private void KeyChanged(KeyboardHook.KeyboardHookEventArgs e)
         {
             if (modifierKeys.Any(p => e.Key == p))
             {
@@ -117,10 +125,10 @@ namespace AutoCompletion
         private async void Complete(Info info)
         {
             hook.IsPaused = true;
-            await Task.Delay(100);
+            await Task.Delay(DefaultSetting.DelayBeforeBackspace);
             KeyboardHelper.SendString("{BS " + info.Input.Length.ToString() + "}");
 
-            await Task.Delay(100);
+            await Task.Delay(DefaultSetting.DelayBeforeSend);
 
             KeyboardHelper.SendString(info.Output);
             hook.IsPaused = false;

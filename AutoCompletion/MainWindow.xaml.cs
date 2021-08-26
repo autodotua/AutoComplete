@@ -31,11 +31,56 @@ namespace AutoCompletion
         private readonly AutoCompletionHelper helper = new AutoCompletionHelper();
         private TrayIcon tray;
         private readonly HotKey hotkey = new HotKey();
+        public Settings Settings => DefaultSetting;
+
+        public Dictionary<string, string> SpecialCharacters { get; }
+
+        public const string SpecialCharactersString = @"BACKSPACE	{BKSP}
+BREAK	{BREAK}
+CAPS LOCK	{CAPSLOCK}
+DEL or DELETE	{DEL}
+DOWN ARROW	{DOWN}
+END	{END}
+ENTER	{ENTER}
+ESC	{ESC}
+HELP	{HELP}
+HOME	{HOME}
+INS or INSERT	{INS}
+LEFT ARROW	{LEFT}
+NUM LOCK	{NUMLOCK}
+PAGE DOWN	{PGDN}
+PAGE UP	{PGUP}
+PRINT SCREEN	{PRTSC}
+RIGHT ARROW	{RIGHT}
+SCROLL LOCK	{SCROLLLOCK}
+TAB	{TAB}
+UP ARROW	{UP}
+F1	{F1}
+F2	{F2}
+F3	{F3}
+F4	{F4}
+F5	{F5}
+F6	{F6}
+F7	{F7}
+F8	{F8}
+F9	{F9}
+F10	{F10}
+F11	{F11}
+F12	{F12}
+F13	{F13}
+F14	{F14}
+F15	{F15}
+F16	{F16}
+Keypad add	{ADD}
+Keypad subtract	{SUBTRACT}
+Keypad multiply	{MULTIPLY}
+Keypad divide	{DIVIDE}";
 
         public MainWindow()
         {
             helper = new AutoCompletionHelper();
-
+            SpecialCharacters = SpecialCharactersString.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Split('\t')).ToDictionary(p => p[0], p => p[1]);
             InitializeComponent();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Infos)));
             StartupButtonContent = Startup.IsRegistryKeyExist() == FzLib.IO.ShortcutStatus.Exist ? "取消开机自启" : "注册开机自启";
@@ -144,6 +189,13 @@ namespace AutoCompletion
         {
             tray?.Dispose();
             base.OnClosed(e);
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems != null && e.AddedItems.Count > 0)
+                Infos.Add(new Info() { Output = (e.AddedItems[0] as KeyValuePair<string, string>?).Value.Value });
+            (sender as ComboBox).SelectedItem = null;
         }
     }
 }

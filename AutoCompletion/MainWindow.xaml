@@ -51,33 +51,47 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <Grid
+        <ui:SimpleStackPanel
             Grid.Column="2"
-            VerticalAlignment="Bottom">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="8" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="8" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
+            VerticalAlignment="Bottom"
+            Spacing="8">
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                ui:ControlHelper.Header="触发事件"
+                SelectedIndex="{Binding Settings.KeyEvent}">
+                <ComboBoxItem>按键按下</ComboBoxItem>
+                <ComboBoxItem>按键抬起</ComboBoxItem>
+            </ComboBox>
+            <ui:NumberBox
+                ui:ControlHelper.Header="删除已有字符前延时"
+                Minimum="0"
+                Text="{Binding Settings.DelayBeforeBackspace}" />
+            <ui:NumberBox
+                ui:ControlHelper.Description="单位：毫秒"
+                ui:ControlHelper.Header="插入字符前延时"
+                Minimum="0"
+                Text="{Binding Settings.DelayBeforeSend}" />
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                ui:ControlHelper.Header="新建特殊字符"
+                ui:ControlHelper.PlaceholderText="选择"
+                DisplayMemberPath="Key"
+                ItemsSource="{Binding SpecialCharacters}"
+                SelectedValuePath="Value"
+                SelectionChanged="ComboBox_SelectionChanged" />
             <Button
-                Grid.Row="0"
                 HorizontalAlignment="Stretch"
                 Click="StartupButtonClick"
                 Content="{Binding StartupButtonContent}" />
 
             <Button
-                Grid.Row="2"
                 HorizontalAlignment="Stretch"
                 Click="SaveButtonClick"
                 Content="保存" />
             <Button
-                Grid.Row="4"
                 HorizontalAlignment="Stretch"
                 Click="ShutdownButtonClick"
                 Content="完全退出" />
-        </Grid>
+        </ui:SimpleStackPanel>
     </Grid>
 </Window>

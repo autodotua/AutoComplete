@@ -10,14 +10,14 @@ using System.Windows.Input;
 
 namespace AutoCompletion
 {
-    internal class Settings : IJsonSerializable
+    public class Settings : IJsonSerializable
     {
         private const string JsonPath = "AutoCompletionConfig.json";
 
         static Settings()
         {
             DefaultSetting = new Settings();
-            DefaultSetting.LoadFromJsonFile(JsonPath);
+            DefaultSetting.TryLoadFromJsonFile(JsonPath);
             if (DefaultSetting.Infos == null)
             {
                 DefaultSetting.Infos = new ObservableCollection<Info>();
@@ -25,6 +25,9 @@ namespace AutoCompletion
         }
 
         public static Settings DefaultSetting { get; }
+        public int DelayBeforeBackspace { get; set; } = 100;
+        public int DelayBeforeSend { get; set; } = 100;
+        public int KeyEvent { get; set; }
 
         public ObservableCollection<Info> Infos { get; set; }
 

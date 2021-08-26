@@ -9,8 +9,7 @@ namespace AutoCompletion
 {
     public class Info : INotifyPropertyChanged
     {
-
-        public bool Enable { get; set; }
+        public bool Enable { get; set; } = true;
 
         public string Input
         {
@@ -19,7 +18,7 @@ namespace AutoCompletion
             {
                 if (value.Any(p => p < 33 || p > 126))
                 {
-                    WpfControls.Dialog.DialogHelper.ShowError("输入的内容超出范围！");
+                    throw new Exception("输入的内容超出范围！");
                 }
                 else
                 {
@@ -32,17 +31,15 @@ namespace AutoCompletion
                         input = value;
                     }
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Input)));
-
                 }
-
             }
         }
+
         private string input;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Output { get; set; }
-
 
         public bool Shift { get; set; }
         public bool Alt { get; set; }

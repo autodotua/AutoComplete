@@ -1,35 +1,37 @@
-﻿using System;
+﻿using FzLib.DataStorage.Serialization;
+using FzLib.Device;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using WpfCodes.Program;
-using static WpfCodes.Device.HotKey;
 
 namespace AutoCompletion
 {
-    class Settings : SettingsBase
+    internal class Settings : IJsonSerializable
     {
+        private const string JsonPath = "AutoCompletionConfig.json";
+
         static Settings()
         {
-            try
+            DefaultSetting = new Settings();
+            DefaultSetting.LoadFromJsonFile(JsonPath);
+            if (DefaultSetting.Infos == null)
             {
-                DefaultSetting = GetJsonSetting<Settings>("AutoCompletionConfig.json");
-            }
-            catch (System.Exception ex)
-            {
-                WpfControls.Dialog.DialogHelper.ShowException("加载配置文件失败", ex, true);
-
-                DefaultSetting = SettingsBase.CreatJsonSetting<Settings>("AutoCompletionConfig.json");
+                DefaultSetting.Infos = new ObservableCollection<Info>();
             }
         }
+
         public static Settings DefaultSetting { get; }
 
         public ObservableCollection<Info> Infos { get; set; }
 
-        public HotKeyInfo SwitchHotKey { get; set; } = new HotKeyInfo(Key.OemQuestion, ModifierKeys.Control | ModifierKeys.Shift);
+        public void Save()
+        {
+            this.Save(JsonPath);
+        }
 
         ~Settings()
         {

@@ -1,82 +1,47 @@
-﻿using System;
+﻿using FzLib;
+using FzLib.Device;
+using FzLib.Program.Runtime;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using WpfCodes.Device;
 using static AutoCompletion.Settings;
 
 namespace AutoCompletion
 {
-    public class AutoCompletionHelper
+    public class AutoCompletionHelper : INotifyPropertyChanged
     {
-        KeyboardHook hook = new KeyboardHook("AutoCompletion");
+        private KeyboardHook hook = new KeyboardHook(FzLib.Program.App.ProgramName);
 
-        WpfCodes.Program.TrayIcon tray;
         public bool IsPause
         {
             get => hook.IsPaused;
             set
             {
                 hook.IsPaused = value;
-                if (value)
-                {
-                    tray.ContextMenu.MenuItems[0].Text = "启动";
-                }
-                else
-                {
-                    tray.ContextMenu.MenuItems[0].Text = "暂停";
-                }
-
-                if (App.Current.MainWindow.Visibility != Visibility.Visible || App.Current.MainWindow.WindowState == WindowState.Minimized)
-                {
-                    ShowTrayMessage("自动补全已" + (value ? "暂停" : "启动"));
-                }
+                this.Notify(nameof(IsPause));
             }
-        }
-
-        public void ShowTrayMessage(string message)
-        {
-            tray.ShowMessage(message);
         }
 
         public AutoCompletionHelper()
         {
-            tray = new WpfCodes.Program.TrayIcon(Properties.Resources.icon_tray, "自动补全");
-            tray.MouseLeftClick += (p1, p2) =>
-            {
-                if (App.Current.MainWindow.Visibility == Visibility.Collapsed)
-                {
-                    App.Current.MainWindow.Show();
-                    App.Current.MainWindow.WindowState = WindowState.Normal;
-                    //Topmost = true;
-                    //Topmost = false;
-                    App.Current.MainWindow.Activate();
-
-                }
-                else
-                {
-                    App.Current.MainWindow.WindowState = WindowState.Minimized;
-                    App.Current.MainWindow.Visibility = Visibility.Collapsed;
-                }
-            };
-
-            tray.AddContextMenu("暂停", () => IsPause = !IsPause);
-            tray.AddContextMenu("退出", () => Application.Current.Shutdown());
-            tray.Show();
-            hook.KeyUp += KeyUp;
-            hook.KeyDown += KeyDown;
+            //hook.KeyUp += KeyUp;
+            hook.KeyDown += KeyUp;
         }
 
-        readonly List<char> inputedChars = new List<char>();
+        private readonly List<char> inputedChars = new List<char>();
+
         private void KeyDown(object sender, KeyboardHook.KeyboardHookEventArgs e)
         {
-            Debug.WriteLine(KeyboardHelper.GetLocalizedKeyString(e.Key));
         }
+
         private void KeyUp(object sender, KeyboardHook.KeyboardHookEventArgs e)
         {
             if (modifierKeys.Any(p => e.Key == p))
@@ -105,6 +70,8 @@ namespace AutoCompletion
             Key.LeftShift,
             Key.RightShift,
         };
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private void Check()
         {
@@ -153,19 +120,10 @@ namespace AutoCompletion
             await Task.Delay(100);
             KeyboardHelper.SendString("{BS " + info.Input.Length.ToString() + "}");
 
-            //  KeyboardHelper.SendString("+");
-            //  KeyboardHelper.SendString("^");
-            //  KeyboardHelper.SendString("%");
-
             await Task.Delay(100);
 
             KeyboardHelper.SendString(info.Output);
             hook.IsPaused = false;
-        }
-
-        ~AutoCompletionHelper()
-        {
-            tray.Dispose();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using MahApps.Metro.Controls;
+﻿using FzLib.Device;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -16,52 +16,88 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using WpfControls.Win10Style;
 using static AutoCompletion.Settings;
-using static WpfCodes.Program.Startup;
-using static WpfControls.Dialog.DialogHelper;
+using HotKey = FzLib.Device.HotKey;
+using FzLib.Program;
+using FzLib.Program.Runtime;
 
 namespace AutoCompletion
 {
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : ModernWindow, INotifyPropertyChanged
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        AutoCompletionHelper helper;
-
-        WpfCodes.Device.HotKey hotkey;
-
+        private readonly AutoCompletionHelper helper = new AutoCompletionHelper();
+        private TrayIcon tray;
+        private readonly HotKey hotkey = new HotKey();
 
         public MainWindow()
         {
             helper = new AutoCompletionHelper();
 
-            hotkey = new WpfCodes.Device.HotKey();
-            SwitchHotKey = new HotKey(DefaultSetting.SwitchHotKey.Key, DefaultSetting.SwitchHotKey.Modifiers);
-
             InitializeComponent();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Infos)));
-            StartupButtonContent = WillRunWhenStartup("AutoCompletion") ? "取消开机自启" : "注册开机自启";
+            StartupButtonContent = Startup.IsRegistryKeyExist() == FzLib.IO.ShortcutStatus.Exist ? "取消开机自启" : "注册开机自启";
+            helper.PropertyChanged += Helper_PropertyChanged;
+            ShowTrayIcon();
+        }
 
-            Icon =
-          Imaging.CreateBitmapSourceFromHBitmap(
-          Properties.Resources.icon.ToBitmap().GetHbitmap(),
-          IntPtr.Zero,
-          Int32Rect.Empty,
-          BitmapSizeOptions.FromEmptyOptions());
+        private void Helper_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(AutoCompletionHelper.IsPause))
+            {
+                if (helper.IsPause)
+                {
+                    tray.ContextMenuStrip.Items[0].Text = "启动";
+                }
+                else
+                {
+                    tray.ContextMenuStrip.Items[0].Text = "暂停";
+                }
+                if (Visibility != Visibility.Visible || WindowState == WindowState.Minimized)
+                {
+                    tray.ShowMessage("自动补全已" + (helper.IsPause ? "暂停" : "启动"));
+                }
+            }
+        }
+
+        private void ShowTrayIcon()
+        {
+            tray = new TrayIcon(Resource.icon_tray, "自动补全");
+            tray.MouseLeftClick += (p1, p2) =>
+            {
+                if (Visibility == Visibility.Collapsed)
+                {
+                    Show();
+                    WindowState = WindowState.Normal;
+                    Topmost = true;
+                    Topmost = false;
+                    Activate();
+                }
+                else
+                {
+                    WindowState = WindowState.Minimized;
+                    Visibility = Visibility.Collapsed;
+                }
+            };
+
+            tray.AddContextMenuStripItem("暂停", () => helper.IsPause = !helper.IsPause);
+            tray.AddContextMenuStripItem("退出", () => Application.Current.Shutdown());
+            tray.ReShowWhenDisplayChanged = true;
+            tray.Show();
         }
 
         public ObservableCollection<Info> Infos => DefaultSetting.Infos;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-
-
         private void ShutdownButtonClick(object sender, RoutedEventArgs e)
         {
+            helper.IsPause = true;
             Application.Current.Shutdown();
         }
+
         private string startupButtonContent;
 
         public string StartupButtonContent
@@ -74,43 +110,18 @@ namespace AutoCompletion
             }
         }
 
-        public HotKey SwitchHotKey
-        {
-            get => switchHotKey;
-            set
-            {
-
-                try
-                {
-                    hotkey.UnregisterAll();
-                    hotkey.Register(value.Key, value.ModifierKeys); switchHotKey = value;
-
-                    DefaultSetting.SwitchHotKey = new WpfCodes.Device.HotKey.HotKeyInfo(value.Key, value.ModifierKeys);
-                }
-                catch (Exception ex)
-                {
-                    helper.ShowTrayMessage("注册热键失败" + Environment.NewLine + ex.Message);
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SwitchHotKey)));
-
-            }
-        }
-
-        private HotKey switchHotKey;
-
-
-
         private void StartupButtonClick(object sender, RoutedEventArgs e)
         {
-            if (WillRunWhenStartup("AutoCompletion") ? CancelRunWhenStartup("AutoCompletion") : SetRunWhenStartup("AutoCompletion", "startup"))
+            if (Startup.IsRegistryKeyExist() == FzLib.IO.ShortcutStatus.Exist)
             {
-                StartupButtonContent = WillRunWhenStartup("AutoCompletion") ? "取消开机自启" : "注册开机自启";
+                Startup.DeleteRegistryKey();
             }
             else
             {
-                ShowError("失败");
+                Startup.CreateRegistryKey("startup");
             }
+
+            StartupButtonContent = Startup.IsRegistryKeyExist() == FzLib.IO.ShortcutStatus.Exist ? "取消开机自启" : "注册开机自启";
         }
 
         private async void SaveButtonClick(object sender, RoutedEventArgs e)
@@ -127,6 +138,12 @@ namespace AutoCompletion
             e.Cancel = true;
             WindowState = WindowState.Minimized;
             Visibility = Visibility.Collapsed;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            tray?.Dispose();
+            base.OnClosed(e);
         }
     }
 }
